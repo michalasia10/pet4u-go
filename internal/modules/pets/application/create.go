@@ -8,28 +8,28 @@ import (
 	idport "src/internal/modules/shared/domain/idgen"
 )
 
-type CreatePetRequest struct {
+type CreateRequest struct {
 	Name      string
 	Species   string
 	Breed     string
 	BirthDate time.Time
 }
 
-type CreatePetResponse struct {
+type CreateResponse struct {
 	Pet domain.Pet
 }
 
-type CreatePetUseCase struct {
+type CreateUseCase struct {
 	repo  domain.PetRepository
 	idGen idport.Port
 	clock cport.Port
 }
 
-func NewCreatePetUseCase(repo domain.PetRepository, idGen idport.Port, clock cport.Port) *CreatePetUseCase {
-	return &CreatePetUseCase{repo: repo, idGen: idGen, clock: clock}
+func NewCreateUseCase(repo domain.PetRepository, idGen idport.Port, clock cport.Port) *CreateUseCase {
+	return &CreateUseCase{repo: repo, idGen: idGen, clock: clock}
 }
 
-func (uc *CreatePetUseCase) Execute(req CreatePetRequest) (CreatePetResponse, error) {
+func (uc *CreateUseCase) Execute(req CreateRequest) (CreateResponse, error) {
 	p := domain.Pet{
 		ID:        uc.idGen.NewID("pet"),
 		Name:      req.Name,
@@ -40,8 +40,8 @@ func (uc *CreatePetUseCase) Execute(req CreatePetRequest) (CreatePetResponse, er
 	}
 	saved, err := uc.repo.Create(p)
 	if err != nil {
-		return CreatePetResponse{}, err
+		return CreateResponse{}, err
 	}
 	_ = uc.clock // reserved for future time-based logic
-	return CreatePetResponse{Pet: saved}, nil
+	return CreateResponse{Pet: saved}, nil
 }

@@ -10,18 +10,18 @@ import (
 	txport "src/internal/modules/shared/domain/tx"
 )
 
-type CreateBookingRequest struct {
+type CreateRequest struct {
 	PetID        string
 	SpecialistID string
 	StartTime    time.Time
 	EndTime      time.Time
 }
 
-type CreateBookingResponse struct {
+type CreateResponse struct {
 	Appointment domain.Appointment
 }
 
-type CreateBookingUseCase struct {
+type CreateUseCase struct {
 	repo         domain.AppointmentRepository
 	idGen        idport.Port
 	clock        cport.Port
@@ -31,12 +31,12 @@ type CreateBookingUseCase struct {
 	minLeadTime  time.Duration
 }
 
-func NewCreateBookingUseCase(repo domain.AppointmentRepository, idGen idport.Port, clock cport.Port, tx txport.Manager, availability domain.AvailabilityService, policy domain.BookingPolicy) *CreateBookingUseCase {
-	return &CreateBookingUseCase{repo: repo, idGen: idGen, clock: clock, tx: tx, availability: availability, policy: policy, minLeadTime: 30 * time.Minute}
+func NewCreateUseCase(repo domain.AppointmentRepository, idGen idport.Port, clock cport.Port, tx txport.Manager, availability domain.AvailabilityService, policy domain.BookingPolicy) *CreateUseCase {
+	return &CreateUseCase{repo: repo, idGen: idGen, clock: clock, tx: tx, availability: availability, policy: policy, minLeadTime: 30 * time.Minute}
 }
 
-func (uc *CreateBookingUseCase) Execute(req CreateBookingRequest) (CreateBookingResponse, error) {
-	var out CreateBookingResponse
+func (uc *CreateUseCase) Execute(req CreateRequest) (CreateResponse, error) {
+	var out CreateResponse
 	err := uc.tx.WithinTransaction(context.TODO(), func(_ context.Context) error {
 		slot, err := domain.NewTimeSlot(req.StartTime, req.EndTime)
 		if err != nil {
@@ -57,11 +57,11 @@ func (uc *CreateBookingUseCase) Execute(req CreateBookingRequest) (CreateBooking
 		if err != nil {
 			return err
 		}
-		out = CreateBookingResponse{Appointment: saved}
+		out = CreateResponse{Appointment: saved}
 		return nil
 	})
 	if err != nil {
-		return CreateBookingResponse{}, err
+		return CreateResponse{}, err
 	}
 	_ = uc.clock // reserved for future validation/time-based logic
 	return out, nil

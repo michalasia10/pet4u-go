@@ -21,23 +21,23 @@ func NewRouter() chi.Router {
 	tx := tximpl.NewNoopManager()
 	availability := mem.NewInMemoryAvailabilityService(repo)
 	policy := mem.NewInMemoryBookingPolicy()
-	createUC := application.NewCreateBookingUseCase(repo, idGen, clock, tx, availability, policy)
-	listUC := application.NewListBookingsUseCase(repo)
+	createUC := application.NewCreateUseCase(repo, idGen, clock, tx, availability, policy)
+	listUC := application.NewListUseCase(repo)
 
 	r.Get("/", httpx.Endpoint(func(r *http.Request) (int, any, error) {
 		resp, err := listUC.Execute()
 		if err != nil {
 			return http.StatusInternalServerError, nil, err
 		}
-		dto := ListBookingsResponseDTO{Appointments: toAppointmentDTOs(resp.Appointments)}
+		dto := ListResponseDTO{Appointments: toAppointmentDTOs(resp.Appointments)}
 		return http.StatusOK, dto, nil
 	}))
 
-	r.Post("/", httpx.EndpointJSON[CreateBookingRequestDTO](func(_ *http.Request, body CreateBookingRequestDTO) (int, any, error) {
+	r.Post("/", httpx.EndpointJSON[CreateRequestDTO](func(_ *http.Request, body CreateRequestDTO) (int, any, error) {
 		if err := httpx.ValidateTags(body); err != nil {
 			return http.StatusUnprocessableEntity, nil, err
 		}
-		resp, err := createUC.Execute(application.CreateBookingRequest{
+		resp, err := createUC.Execute(application.CreateRequest{
 			PetID:        body.PetID,
 			SpecialistID: body.SpecialistID,
 			StartTime:    body.StartTime,
