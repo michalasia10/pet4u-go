@@ -1,34 +1,32 @@
 package application
 
 import (
-    "strings"
+	"strings"
 
-    "src/internal/modules/places/domain"
+	"src/internal/modules/places/domain"
 )
 
 type SearchPlacesRequest struct {
-    Query string
-    Tags  []string
+	Query string
+	Tags  []string
 }
 
 type SearchPlacesResponse struct {
-    Places []domain.Place `json:"places"`
+	Places []domain.Place
 }
 
 type SearchPlacesUseCase struct {
-    repo domain.PlaceRepository
+	repo domain.PlaceRepository
 }
 
 func NewSearchPlacesUseCase(repo domain.PlaceRepository) *SearchPlacesUseCase {
-    return &SearchPlacesUseCase{repo: repo}
+	return &SearchPlacesUseCase{repo: repo}
 }
 
 func (uc *SearchPlacesUseCase) Execute(req SearchPlacesRequest) (SearchPlacesResponse, error) {
-    places, err := uc.repo.Search(strings.TrimSpace(req.Query), req.Tags)
-    if err != nil {
-        return SearchPlacesResponse{}, err
-    }
-    return SearchPlacesResponse{Places: places}, nil
+	places, err := uc.repo.Search(strings.TrimSpace(req.Query), req.Tags)
+	if err != nil {
+		return SearchPlacesResponse{}, err
+	}
+	return SearchPlacesResponse{Places: places}, nil
 }
-
-
