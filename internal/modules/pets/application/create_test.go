@@ -14,12 +14,19 @@ import (
 )
 
 var _ = Describe("CreateUseCase", func() {
-	It("creates a pet with generated ID", func() {
-		repo := mem.NewInMemoryPetRepository()
+	var (
+		repo *mem.InMemoryPetRepository
+		uc   *app.CreateUseCase
+	)
+
+	BeforeEach(func() {
+		repo = mem.NewInMemoryPetRepository()
 		idGen := idimpl.NewTimeIDGen()
 		clock := cimpl.NewSystemClock()
-		uc := app.NewCreateUseCase(repo, idGen, clock)
+		uc = app.NewCreateUseCase(repo, idGen, clock)
+	})
 
+	It("creates a pet with generated ID", func() {
 		req := app.CreateRequest{
 			Name:      "Rex",
 			Species:   "dog",
@@ -34,11 +41,6 @@ var _ = Describe("CreateUseCase", func() {
 	})
 
 	It("validates required fields (name, species)", func() {
-		repo := mem.NewInMemoryPetRepository()
-		idGen := idimpl.NewTimeIDGen()
-		clock := cimpl.NewSystemClock()
-		uc := app.NewCreateUseCase(repo, idGen, clock)
-
 		req := app.CreateRequest{ // missing name/species
 			Breed:     "mutt",
 			BirthDate: time.Now().AddDate(-1, 0, 0),

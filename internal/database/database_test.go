@@ -3,9 +3,10 @@ package database
 import (
 	"context"
 	"log"
-	"testing"
 	"time"
 
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -53,48 +54,37 @@ func mustStartPostgresContainer() (func(context.Context, ...testcontainers.Termi
 	return dbContainer.Terminate, err
 }
 
-func TestMain(m *testing.M) {
-	teardown, err := mustStartPostgresContainer()
-	if err != nil {
-		log.Fatalf("could not start postgres container: %v", err)
-	}
+var _ = BeforeSuite(func() {
+	var err error
+	teardown, err = mustStartPostgresContainer()
+	Expect(err).ToNot(HaveOccurred())
+})
 
-	m.Run()
+var teardown func(context.Context, ...testcontainers.TerminateOption) error
 
+var _ = AfterSuite(func() {
 	if teardown != nil && teardown(context.Background()) != nil {
-		log.Fatalf("could not teardown postgres container: %v", err)
+		log.Fatalf("could not teardown postgres container")
 	}
-}
+})
 
-func TestNew(t *testing.T) {
-	srv := New()
-	if srv == nil {
-		t.Fatal("New() returned nil")
-	}
-}
+var _ = Describe("Database", func() {
+	It("New returns non-nil", func() {
+		srv := New()
+		Expect(srv).ToNot(BeNil())
+	})
 
-func TestHealth(t *testing.T) {
-	srv := New()
+	It("Health returns up/healthy", func() {
+		srv := New()
+		stats := srv.Health()
+		Expect(stats["status"]).To(Equal("up"))
+		_, hasErr := stats["error"]
+		Expect(hasErr).To(BeFalse())
+		Expect(stats["message"]).To(Equal("It's healthy"))
+	})
 
-	stats := srv.Health()
-
-	if stats["status"] != "up" {
-		t.Fatalf("expected status to be up, got %s", stats["status"])
-	}
-
-	if _, ok := stats["error"]; ok {
-		t.Fatalf("expected error not to be present")
-	}
-
-	if stats["message"] != "It's healthy" {
-		t.Fatalf("expected message to be 'It's healthy', got %s", stats["message"])
-	}
-}
-
-func TestClose(t *testing.T) {
-	srv := New()
-
-	if srv.Close() != nil {
-		t.Fatalf("expected Close() to return nil")
-	}
-}
+	It("Close returns nil", func() {
+		srv := New()
+		Expect(srv.Close()).To(BeNil())
+	})
+})

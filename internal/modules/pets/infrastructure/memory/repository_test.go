@@ -11,8 +11,13 @@ import (
 )
 
 var _ = Describe("InMemoryPetRepository", func() {
+	var repo *InMemoryPetRepository
+
+	BeforeEach(func() {
+		repo = NewInMemoryPetRepository()
+	})
+
 	It("creates and retrieves pets", func() {
-		repo := NewInMemoryPetRepository()
 		p := domain.Pet{ID: "p1", Name: "Rex"}
 		_, err := repo.Create(p)
 		Expect(err).ToNot(HaveOccurred())
@@ -23,14 +28,12 @@ var _ = Describe("InMemoryPetRepository", func() {
 	})
 
 	It("returns error on missing pet", func() {
-		repo := NewInMemoryPetRepository()
 		_, err := repo.GetByID("missing")
 		Expect(err).To(HaveOccurred())
 		Expect(errors.Is(err, err)).To(BeTrue())
 	})
 
 	It("updates and lists pets", func() {
-		repo := NewInMemoryPetRepository()
 		p := domain.Pet{ID: "p1", Name: "Rex"}
 		repo.Create(p)
 

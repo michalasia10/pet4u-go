@@ -31,6 +31,12 @@
 - Unit test use cases in isolation via in-memory repos.
 - Integration tests use `testcontainers` (see `internal/database`).
 
+### Ginkgo/Gomega Conventions
+- One `suite_test.go` per test package using Ginkgo. No other file should call `RunSpecs`.
+- Prefer `BeforeEach` to arrange shared test fixtures (repos, use cases, services). Avoid duplicating setup inside multiple `It`s.
+- Keep application tests transport-agnostic: assert domain values, not HTTP.
+- Use Testify matchers optionally, but keep Gomega as primary assertion DSL.
+
 ## DX
 - Keep router wiring small; feature routers are mounted in `internal/server/routes.go`.
 - Prefer small, explicit mappers over implicit JSON reuse. Avoid coupling DTOs to domain structs.

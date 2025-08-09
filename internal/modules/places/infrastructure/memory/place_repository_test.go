@@ -9,13 +9,17 @@ import (
 )
 
 var _ = Describe("InMemoryPlaceRepository", func() {
-	It("searches by name/address and tags", func() {
+	var repo *InMemoryPlaceRepository
+
+	BeforeEach(func() {
 		seed := []domain.Place{
 			{ID: "1", Name: "Cafe Paws", Address: "123 Bark St", Tags: []string{"cafe", "wifi"}},
 			{ID: "2", Name: "Happy Park", Address: "Green Ave", Tags: []string{"park"}},
 		}
-		repo := NewInMemoryPlaceRepository(seed)
+		repo = NewInMemoryPlaceRepository(seed)
+	})
 
+	It("searches by name/address and tags", func() {
 		resp, err := repo.Search("park", nil)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(resp).To(HaveLen(1))

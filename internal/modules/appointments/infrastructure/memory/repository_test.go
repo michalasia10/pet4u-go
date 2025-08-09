@@ -11,8 +11,13 @@ import (
 )
 
 var _ = Describe("InMemoryAppointmentRepository", func() {
+	var repo *InMemoryAppointmentRepository
+
+	BeforeEach(func() {
+		repo = NewInMemoryAppointmentRepository()
+	})
+
 	It("creates and lists appointments", func() {
-		repo := NewInMemoryAppointmentRepository()
 		slot, _ := domain.NewTimeSlot(time.Now().Add(time.Hour), time.Now().Add(90*time.Minute))
 		a := domain.Appointment{ID: "a1", PetID: "p1", SpecialistID: "s1", StartTime: slot.Start, EndTime: slot.End, Status: domain.AppointmentStatusBooked}
 		_, err := repo.Create(a)
