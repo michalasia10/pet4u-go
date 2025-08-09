@@ -1,0 +1,38 @@
+# Cursor Rules for pet4u-go
+
+## Goals
+- Feature-oriented DDD (per-module): `internal/modules/<feature>/{domain,application,infrastructure,interfaces}`.
+- Clean Architecture (Ports & Adapters): domain defines ports; adapters live in infrastructure and interfaces.
+- Pragmatic DDD Lite per ThreeDots Labs guidance.
+
+## Conventions
+- Packages use `lowercase` names; no stutter (e.g., `appointments/domain`).
+- Domain models never import `infrastructure` nor `interfaces`.
+- Use cases live in `application/` and depend only on domain ports.
+- HTTP-only DTOs and mappers live in `interfaces/http/`.
+- Repositories are domain ports; concrete implementations in `infrastructure/*`.
+- Handlers use `internal/pkg/httpx` Endpoint helper. No manual JSON in routers.
+- Errors: expose `httpx.HTTPError` from interfaces only; domain returns Go errors.
+
+### Domain modeling (Good Practices)
+- Domain models and VOs are transport-agnostic (no JSON tags). Use DTOs + mappers for I/O shapes.
+- Prefer Value Objects with invariants (e.g., `TimeSlot` with `Start < End`).
+- Create aggregates via factories to enforce invariants at construction (e.g., `NewAppointment`).
+- Keep behavior on aggregates first (`Cancel`, `Reschedule`, `CanBeBooked`). Extract Domain Services when logic spans aggregates.
+- Domain Services operate on ports and aggregates (e.g., `AppointmentAvailabilityService`, `BookingPolicy`).
+- Use shared domain ports: `Clock`, `IDGenerator`, `TxManager`; add more ports when domain needs external data (e.g., holiday calendar).
+
+### HTTP layer
+- All request validation lives in DTOs or `interfaces/http` using tag-based validation.
+- Use `httpx.Endpoint` / `EndpointJSON` to avoid boilerplate and unify error mapping.
+- Map domain errors to HTTP (400/404/409/422) in interfaces; do not leak HTTP into domain.
+
+## Testing
+- Unit test use cases in isolation via in-memory repos.
+- Integration tests use `testcontainers` (see `internal/database`).
+
+## DX
+- Keep router wiring small; feature routers are mounted in `internal/server/routes.go`.
+- Prefer small, explicit mappers over implicit JSON reuse. Avoid coupling DTOs to domain structs.
+
+

@@ -8,6 +8,10 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+
+    appointmentshttp "src/internal/modules/appointments/interfaces/http"
+    petshttp "src/internal/modules/pets/interfaces/http"
+    placeshttp "src/internal/modules/places/interfaces/http"
 )
 
 func (s *Server) RegisterRoutes() http.Handler {
@@ -25,6 +29,13 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.Get("/", s.HelloWorldHandler)
 
 	r.Get("/health", s.healthHandler)
+
+	// API v1 feature routers
+	r.Route("/api/v1", func(r chi.Router) {
+		r.Mount("/places", placeshttp.NewRouter())
+		r.Mount("/appointments", appointmentshttp.NewRouter())
+		r.Mount("/pets", petshttp.NewRouter())
+	})
 
 	return r
 }
