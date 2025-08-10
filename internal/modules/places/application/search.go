@@ -24,7 +24,16 @@ func NewSearchUseCase(repo domain.PlaceRepository) *SearchUseCase {
 }
 
 func (uc *SearchUseCase) Execute(req SearchRequest) (SearchResponse, error) {
-	places, err := uc.repo.Search(strings.TrimSpace(req.Query), req.Tags)
+	normalizedTags := make([]string, 0, len(req.Tags))
+	for _, t := range req.Tags {
+		normalizedTags = append(normalizedTags, strings.ToLower(strings.TrimSpace(t)))
+	}
+	criteria := domain.SearchCriteria{
+		Query: strings.TrimSpace(req.Query),
+		Tags:  normalizedTags,
+		Limit: 100,
+	}
+	places, err := uc.repo.Search(criteria)
 	if err != nil {
 		return SearchResponse{}, err
 	}

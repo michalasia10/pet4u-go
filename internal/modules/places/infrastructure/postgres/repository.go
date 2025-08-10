@@ -28,23 +28,28 @@ func toDomainPlace(r Place) domain.Place {
 		Address:       r.Address,
 		IsPetFriendly: r.IsPetFriendly,
 		Tags:          tags,
+		// Location, PetTypes, Sources are not yet persisted in this MVP
 	}
 }
 
-func (r *PlaceRepository) Search(query string, tags []string) ([]domain.Place, error) {
+func (r *PlaceRepository) Search(criteria domain.SearchCriteria) ([]domain.Place, error) {
 	tx := r.db.WithContext(context.Background()).Model(&Place{})
-	if query != "" {
-		like := "%" + query + "%"
+	if criteria.Query != "" {
+		like := "%" + criteria.Query + "%"
 		tx = tx.Where("LOWER(name) LIKE LOWER(?) OR LOWER(address) LIKE LOWER(?)", like, like)
 	}
-	if len(tags) > 0 {
+	if len(criteria.Tags) > 0 {
 		// contains-all over JSONB using @> with array; requires tags stored as jsonb array
 		// Example matches ANY: tx = tx.Where("tags ?| array[?]", pq.StringArray(tags))
 		// For contains-all, iterate; simple approach: first tag only
-		tx = tx.Where("tags @> ?::jsonb", toJSONBArray(tags))
+		tx = tx.Where("tags @> ?::jsonb", toJSONBArray(criteria.Tags))
 	}
 	var rows []Place
-	if err := tx.Limit(100).Find(&rows).Error; err != nil {
+	limit := 100
+	if criteria.Limit > 0 && criteria.Limit < limit {
+		limit = criteria.Limit
+	}
+	if err := tx.Limit(limit).Find(&rows).Error; err != nil {
 		return nil, err
 	}
 	out := make([]domain.Place, 0, len(rows))

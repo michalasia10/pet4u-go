@@ -6,11 +6,14 @@ type SearchRequestDTO struct {
 }
 
 type PlaceDTO struct {
-	ID            string   `json:"id"`
-	Name          string   `json:"name"`
-	Address       string   `json:"address"`
-	Tags          []string `json:"tags"`
-	IsPetFriendly bool     `json:"is_pet_friendly"`
+	ID            string                     `json:"id"`
+	Name          string                     `json:"name"`
+	Address       string                     `json:"address"`
+	Location      struct{ Lat, Lng float64 } `json:"location"`
+	Tags          []string                   `json:"tags"`
+	PetTypes      []string                   `json:"pet_types"`
+	IsPetFriendly bool                       `json:"is_pet_friendly"`
+	Source        string                     `json:"source"`
 }
 
 type SearchResponseDTO struct {
