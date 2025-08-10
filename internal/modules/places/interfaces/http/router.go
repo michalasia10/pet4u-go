@@ -5,20 +5,16 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"src/internal/database"
 	"src/internal/modules/places/application"
-	"src/internal/modules/places/domain"
-	mem "src/internal/modules/places/infrastructure/memory"
+	pg "src/internal/modules/places/infrastructure/postgres"
 	"src/internal/pkg/httpx"
 )
 
 func NewRouter() chi.Router {
 	r := chi.NewRouter()
 
-	seed := []domain.Place{
-		{ID: "pl_1", Name: "Cafe Paws", Address: "123 Bark St", Tags: []string{"cafe", "wifi"}, IsPetFriendly: true},
-		{ID: "pl_2", Name: "Happy Park", Address: "Green Ave", Tags: []string{"park"}, IsPetFriendly: true},
-	}
-	repo := mem.NewInMemoryPlaceRepository(seed)
+	repo := pg.NewPlaceRepository(database.GormDB())
 	uc := application.NewSearchUseCase(repo)
 
 	r.Get("/", httpx.Endpoint(func(r *http.Request) (int, any, error) {

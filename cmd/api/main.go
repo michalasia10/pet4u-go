@@ -9,7 +9,11 @@ import (
 	"syscall"
 	"time"
 
+	"src/internal/database"
 	"src/internal/server"
+	_ "src/migrations"
+
+	"github.com/pressly/goose/v3"
 )
 
 func gracefulShutdown(apiServer *http.Server, done chan bool) {
@@ -38,6 +42,14 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 }
 
 func main() {
+	// Initialize DB and run migrations before starting HTTP server
+	_ = database.New()
+	if err := goose.SetDialect("postgres"); err != nil {
+		panic(fmt.Sprintf("goose dialect error: %v", err))
+	}
+	if err := goose.Up(database.SQLDB(), "migrations"); err != nil {
+		panic(fmt.Sprintf("failed to run migrations: %v", err))
+	}
 
 	server := server.NewServer()
 

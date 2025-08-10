@@ -5,8 +5,10 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"src/internal/database"
 	"src/internal/modules/appointments/application"
-	mem "src/internal/modules/appointments/infrastructure/memory"
+	infra "src/internal/modules/appointments/infrastructure"
+	pg "src/internal/modules/appointments/infrastructure/postgres"
 	cimpl "src/internal/modules/shared/infrastructure/clock"
 	idimpl "src/internal/modules/shared/infrastructure/idgen"
 	tximpl "src/internal/modules/shared/infrastructure/tx"
@@ -15,12 +17,12 @@ import (
 
 func NewRouter() chi.Router {
 	r := chi.NewRouter()
-	repo := mem.NewInMemoryAppointmentRepository()
-	idGen := idimpl.NewTimeIDGen()
+	repo := pg.NewAppointmentRepository(database.GormDB())
+	idGen := idimpl.NewUUIDGen()
 	clock := cimpl.NewSystemClock()
 	tx := tximpl.NewNoopManager()
-	availability := mem.NewInMemoryAvailabilityService(repo)
-	policy := mem.NewInMemoryBookingPolicy()
+	availability := infra.NewAvailabilityService(repo)
+	policy := infra.NewNoopBookingPolicy()
 	createUC := application.NewCreateUseCase(repo, idGen, clock, tx, availability, policy)
 	listUC := application.NewListUseCase(repo)
 

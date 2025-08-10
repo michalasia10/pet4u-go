@@ -5,8 +5,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"src/internal/database"
 	"src/internal/modules/pets/application"
-	mem "src/internal/modules/pets/infrastructure/memory"
+	pg "src/internal/modules/pets/infrastructure/postgres"
 	cimpl "src/internal/modules/shared/infrastructure/clock"
 	idimpl "src/internal/modules/shared/infrastructure/idgen"
 	"src/internal/pkg/httpx"
@@ -14,9 +15,9 @@ import (
 
 func NewRouter() chi.Router {
 	r := chi.NewRouter()
-	repo := mem.NewInMemoryPetRepository()
+	repo := pg.NewPetRepository(database.GormDB())
 
-	idGen := idimpl.NewTimeIDGen()
+	idGen := idimpl.NewUUIDGen()
 	clock := cimpl.NewSystemClock()
 	createUC := application.NewCreateUseCase(repo, idGen, clock)
 	getUC := application.NewGetUseCase(repo)

@@ -2,6 +2,12 @@
 
 # Tools
 GINKGO := $(shell go env GOPATH)/bin/ginkgo
+MIGRATIONS_DIR := ./migrations
+
+# --- Env loading ---
+# Load environment variables from .env automatically for CLI targets
+ENV_FILE := .env
+LOAD_ENV := set -a; if [ -f $(ENV_FILE) ]; then . $(ENV_FILE); fi; set +a
 
 # Build the application
 all: build-binary test
@@ -14,6 +20,41 @@ build-binary:
 # Run the application
 run:
 	@go run ./cmd/api
+
+# --- Migrations (Goose) ---
+# Generate new Go migration skeleton (requires name=...)
+makemigrations:
+	@if [ -z "$(name)" ]; then \
+		echo "Usage: make migrate-create name=<migration_name>"; \
+		exit 1; \
+	fi
+	@echo "Creating migration: $(name)"
+	@go run github.com/pressly/goose/v3/cmd/goose@latest -dir $(MIGRATIONS_DIR) -s create $(name)
+
+# Run migrations using our custom binary (imports Go migrations)
+migrate:
+	@$(LOAD_ENV); \
+	if [ -z "$$BLUEPRINT_DB_USERNAME" ] || [ -z "$$BLUEPRINT_DB_PASSWORD" ] || [ -z "$$BLUEPRINT_DB_HOST" ] || [ -z "$$BLUEPRINT_DB_PORT" ] || [ -z "$$BLUEPRINT_DB_DATABASE" ] || [ -z "$$BLUEPRINT_DB_SCHEMA" ]; then \
+		echo "Set BLUEPRINT_DB_* env vars before running migrate"; \
+		exit 1; \
+	fi
+	@go run ./cmd/migrate up
+
+migrate-down:
+	@$(LOAD_ENV); \
+	if [ -z "$$BLUEPRINT_DB_USERNAME" ] || [ -z "$$BLUEPRINT_DB_PASSWORD" ] || [ -z "$$BLUEPRINT_DB_HOST" ] || [ -z "$$BLUEPRINT_DB_PORT" ] || [ -z "$$BLUEPRINT_DB_DATABASE" ] || [ -z "$$BLUEPRINT_DB_SCHEMA" ]; then \
+		echo "Set BLUEPRINT_DB_* env vars before running migrate-down"; \
+		exit 1; \
+	fi
+	@go run ./cmd/migrate down
+
+migrate-status:
+	@$(LOAD_ENV); \
+	if [ -z "$$BLUEPRINT_DB_USERNAME" ] || [ -z "$$BLUEPRINT_DB_PASSWORD" ] || [ -z "$$BLUEPRINT_DB_HOST" ] || [ -z "$$BLUEPRINT_DB_PORT" ] || [ -z "$$BLUEPRINT_DB_DATABASE" ] || [ -z "$$BLUEPRINT_DB_SCHEMA" ]; then \
+		echo "Set BLUEPRINT_DB_* env vars before running migrate-status"; \
+		exit 1; \
+	fi
+	@go run ./cmd/migrate status
 
 dev-up:
 	@docker compose -f docker-compose.dev.yml up -d
@@ -66,4 +107,4 @@ watch:
             fi; \
         fi
 
-.PHONY: all build-binary run test clean watch dev-up dev-down dev-rebuild dev-logs itest
+.PHONY: all build-binary run test clean watch dev-up dev-down dev-rebuild dev-logs itest migrate-create migrate-up migrate-down migrate-status
