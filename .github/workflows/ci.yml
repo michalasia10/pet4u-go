@@ -29,12 +29,12 @@ jobs:
 
       - name: Run unit/spec tests in parallel (exclude database)
         run: |
-          $(go env GOPATH)/bin/ginkgo -r -p -v --skip-package=internal/database
+          make test
 
       - name: Run database tests (serial)
         env:
           TESTCONTAINERS_RYUK_CONTAINER_PRIVILEGED: "true"
         run: |
-          $(go env GOPATH)/bin/ginkgo -v ./internal/database
+          make test-db
 
 

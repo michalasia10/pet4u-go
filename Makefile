@@ -1,48 +1,53 @@
 # Simple Makefile for a Go project
 
-# Build the application
-all: build test
+# Tools
+GINKGO := $(shell go env GOPATH)/bin/ginkgo
 
-build:
-	@echo "Building..."
-	
-	
-	@go build -o main cmd/api/main.go
+# Build the application
+all: build-binary test
+
+build-binary:
+	@echo "Building binary..."
+	@mkdir -p bin
+	@go build -o bin/api ./cmd/api
 
 # Run the application
 run:
-	@go run cmd/api/main.go
-# Create DB container
-docker-run:
-	@if docker compose up --build 2>/dev/null; then \
-		: ; \
-	else \
-		echo "Falling back to Docker Compose V1"; \
-		docker-compose up --build; \
-	fi
+	@go run ./cmd/api
 
-# Shutdown DB container
-docker-down:
-	@if docker compose down 2>/dev/null; then \
-		: ; \
-	else \
-		echo "Falling back to Docker Compose V1"; \
-		docker-compose down; \
-	fi
+dev-up:
+	@docker compose -f docker-compose.dev.yml up -d
+
+dev-rebuild:
+	@docker compose -f docker-compose.dev.yml up -d --build
+
+
+dev-down:
+	@docker compose -f docker-compose.dev.yml down -v
+
+dev-logs:
+	@docker compose -f docker-compose.dev.yml logs -f api
 
 # Test the application
 test:
-	@echo "Testing..."
-	@go test ./... -v
-# Integrations Tests for the application
-itest:
-	@echo "Running integration tests..."
-	@go test ./internal/database -v
+	@echo "Testing (fast specs)..."
+	@$(GINKGO) -r -p -v --skip-package=internal/database
+
+test-db:
+	@echo "Testing (db)..."
+	@$(GINKGO) -v ./internal/database
+
+test-all:
+	@echo "Testing (all specs)..."
+	@make test
+	@make test-db
+
+
 
 # Clean the binary
 clean:
 	@echo "Cleaning..."
-	@rm -f main
+	@rm -f bin/api
 
 # Live Reload
 watch:
@@ -61,4 +66,4 @@ watch:
             fi; \
         fi
 
-.PHONY: all build run test clean watch docker-run docker-down itest
+.PHONY: all build-binary run test clean watch dev-up dev-down dev-rebuild dev-logs itest
