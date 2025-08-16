@@ -3,18 +3,54 @@ package osm
 import (
 	"context"
 	"net/url"
+	"time"
 
+	"src/internal/cache"
 	"src/internal/modules/places/domain"
+
+	"github.com/redis/go-redis/v9"
 )
 
-// Provider implements domain.ExternalPlacesProvider using OpenStreetMap Overpass API.
-// It orchestrates query building, calling the client and mapping to domain.
 type Provider struct {
-	client *OverpassClient
+	client   *OverpassClient
+	cache    PlaceCache
+	cacheTTL time.Duration
 }
 
-func NewProvider(overpassURL string) *Provider {
-	return &Provider{client: NewOverpassClient(overpassURL)}
+type ProviderOption func(*Provider)
+
+func WithCache(cache PlaceCache, ttl time.Duration) ProviderOption {
+	return func(p *Provider) {
+		p.cache = cache
+		p.cacheTTL = ttl
+	}
+}
+
+func newProvider(overpassURL string, opts ...ProviderOption) *Provider {
+	p := &Provider{
+		client:   NewOverpassClient(overpassURL),
+		cacheTTL: 12 * time.Hour,
+	}
+
+	for _, opt := range opts {
+		opt(p)
+	}
+
+	return p
+}
+
+func NewProviderWithInMemoryCache(overpassURL string, maxCacheSize int, ttl time.Duration) *Provider {
+	cacheImpl := cache.NewInMemoryCache[[]domain.Place](maxCacheSize)
+	return newProvider(overpassURL, WithCache(cacheImpl, ttl))
+}
+
+func NewProviderWithRedisCache(overpassURL string, redisClient *redis.Client, ttl time.Duration) *Provider {
+	cacheImpl := cache.NewRedisCache[[]domain.Place](redisClient, "osm:places")
+	return newProvider(overpassURL, WithCache(cacheImpl, ttl))
+}
+
+func NewProviderWithoutCache(overpassURL string) *Provider {
+	return newProvider(overpassURL)
 }
 
 func (p *Provider) ProviderName() string { return "osm" }
@@ -22,6 +58,13 @@ func (p *Provider) ProviderName() string { return "osm" }
 func (p *Provider) Search(criteria domain.SearchCriteria) ([]domain.Place, error) {
 	if criteria.Center == nil || criteria.RadiusM == nil {
 		return []domain.Place{}, nil
+	}
+	cacheKey := GenerateCacheKey(criteria)
+
+	if p.cache != nil {
+		if places, found, err := p.cache.Get(context.Background(), cacheKey); err == nil && found {
+			return places, nil
+		}
 	}
 
 	filters := []string{"amenity=veterinary", "shop=pet", "amenity=park", "leisure=dog_park"}
@@ -46,5 +89,12 @@ func (p *Provider) Search(criteria domain.SearchCriteria) ([]domain.Place, error
 	if err != nil {
 		return nil, err
 	}
-	return mapOverpassToPlaces(p.ProviderName(), payload), nil
+
+	places := mapOverpassToPlaces(p.ProviderName(), payload)
+
+	if p.cache != nil {
+		p.cache.Set(context.Background(), cacheKey, places, p.cacheTTL)
+	}
+
+	return places, nil
 }

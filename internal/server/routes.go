@@ -34,7 +34,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	// API v1 feature routers
 	r.Route("/api/v1", func(r chi.Router) {
-		r.Mount("/places", placeshttp.NewRouter())
+		r.Mount("/places", placeshttp.NewRouter(s.redisClient))
 		r.Mount("/appointments", appointmentshttp.NewRouter())
 		r.Mount("/pets", petshttp.NewRouter())
 	})

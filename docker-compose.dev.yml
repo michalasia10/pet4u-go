@@ -19,6 +19,8 @@ services:
     depends_on:
       psql_bp:
         condition: service_healthy
+      redis:
+        condition: service_healthy
   psql_bp:
     image: postgres:latest
     restart: unless-stopped
@@ -35,9 +37,23 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_volume:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
 volumes:
   psql_volume_bp:
+  redis_volume:
   go-build-cache:
   go-mod-cache:
 

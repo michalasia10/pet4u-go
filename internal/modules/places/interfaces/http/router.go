@@ -4,8 +4,10 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/redis/go-redis/v9"
 
 	"src/internal/database"
 	"src/internal/modules/places/application"
@@ -15,10 +17,11 @@ import (
 	"src/internal/pkg/httpx"
 )
 
-func NewRouter() chi.Router {
+func NewRouter(redisClient *redis.Client) chi.Router {
 	r := chi.NewRouter()
 
 	repo := pg.NewPlaceRepository(database.GormDB())
+	osmProvider := osm.NewProviderWithRedisCache("", redisClient, 12*time.Hour)
 
 	r.Get("/", httpx.Endpoint(func(r *http.Request) (int, any, error) {
 		resp, err := application.NewSearchUseCase(repo).Execute(application.SearchRequest{})
@@ -36,7 +39,7 @@ func NewRouter() chi.Router {
 		petTypePtr := parsePetType(r)
 
 		providers := map[string]domain.ExternalPlacesProvider{}
-		providers["osm"] = osm.NewProvider("")
+		providers["osm"] = osmProvider
 		uc := application.NewSearchAggregatedUseCase(repo, providers, nil)
 
 		resp, err := uc.Execute(application.ExtendedSearchRequest{
