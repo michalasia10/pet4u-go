@@ -19,12 +19,8 @@ var _ = Describe("InMemoryPlaceRepository", func() {
 		repo = NewInMemoryPlaceRepository(seed)
 	})
 
-	It("searches by name/address and tags", func() {
+	It("searches by name/address", func() {
 		resp, err := repo.Search(domain.SearchCriteria{Query: "park"})
-		Expect(err).ToNot(HaveOccurred())
-		Expect(resp).To(HaveLen(1))
-
-		resp, err = repo.Search(domain.SearchCriteria{Tags: []string{"WIFI"}})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(resp).To(HaveLen(1))
 	})

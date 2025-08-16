@@ -3,7 +3,6 @@ package domain
 // SearchCriteria captures filters for searching places across providers and internal DB.
 type SearchCriteria struct {
 	Query   string
-	Tags    []string
 	PetType *PetType
 	Center  *GeoPoint
 	RadiusM *int

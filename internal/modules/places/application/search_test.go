@@ -45,12 +45,6 @@ var _ = Describe("SearchUseCase", func() {
 		Expect(resp.Places[0].Name).To(Equal("Happy Park"))
 	})
 
-	It("filters by tags (must contain all)", func() {
-		resp, err := uc.Execute(app.SearchRequest{Tags: []string{"cafe"}})
-		Expect(err).ToNot(HaveOccurred())
-		Expect(resp.Places).To(HaveLen(2))
-	})
-
 	It("normalizes tags and query (trim/lower)", func() {
 		resp, err := uc.Execute(app.SearchRequest{Query: "  CaFe  ", Tags: []string{"  WiFi "}})
 		Expect(err).ToNot(HaveOccurred())

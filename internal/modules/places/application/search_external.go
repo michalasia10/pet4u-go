@@ -11,7 +11,6 @@ import (
 // Extended request supporting external providers and geo/pet filters.
 type ExtendedSearchRequest struct {
 	Query    string
-	Tags     []string
 	PetType  *domain.PetType
 	Lat      *float64
 	Lng      *float64
@@ -60,14 +59,8 @@ func NewSearchAggregatedUseCase(repo domain.PlaceRepository, providers map[strin
 }
 
 func (uc *SearchAggregatedUseCase) Execute(req ExtendedSearchRequest) (ExtendedSearchResponse, error) {
-	normalizedTags := make([]string, 0, len(req.Tags))
-	for _, t := range req.Tags {
-		normalizedTags = append(normalizedTags, strings.ToLower(strings.TrimSpace(t)))
-	}
-
 	criteria := domain.SearchCriteria{
 		Query: strings.TrimSpace(req.Query),
-		Tags:  normalizedTags,
 		Limit: clampPositive(req.Limit, 1, 50),
 	}
 	if req.PetType != nil {

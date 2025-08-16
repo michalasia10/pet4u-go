@@ -30,7 +30,6 @@ func (uc *SearchUseCase) Execute(req SearchRequest) (SearchResponse, error) {
 	}
 	criteria := domain.SearchCriteria{
 		Query: strings.TrimSpace(req.Query),
-		Tags:  normalizedTags,
 		Limit: 100,
 	}
 	places, err := uc.repo.Search(criteria)

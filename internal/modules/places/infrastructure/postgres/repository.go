@@ -28,7 +28,6 @@ func toDomainPlace(r Place) domain.Place {
 		Address:       r.Address,
 		IsPetFriendly: r.IsPetFriendly,
 		Tags:          tags,
-		// Location, PetTypes, Sources are not yet persisted in this MVP
 	}
 }
 
@@ -37,12 +36,6 @@ func (r *PlaceRepository) Search(criteria domain.SearchCriteria) ([]domain.Place
 	if criteria.Query != "" {
 		like := "%" + criteria.Query + "%"
 		tx = tx.Where("LOWER(name) LIKE LOWER(?) OR LOWER(address) LIKE LOWER(?)", like, like)
-	}
-	if len(criteria.Tags) > 0 {
-		// contains-all over JSONB using @> with array; requires tags stored as jsonb array
-		// Example matches ANY: tx = tx.Where("tags ?| array[?]", pq.StringArray(tags))
-		// For contains-all, iterate; simple approach: first tag only
-		tx = tx.Where("tags @> ?::jsonb", toJSONBArray(criteria.Tags))
 	}
 	var rows []Place
 	limit := 100
@@ -57,9 +50,4 @@ func (r *PlaceRepository) Search(criteria domain.SearchCriteria) ([]domain.Place
 		out = append(out, toDomainPlace(row))
 	}
 	return out, nil
-}
-
-func toJSONBArray(xs []string) string {
-	b, _ := json.Marshal(xs)
-	return string(b)
 }

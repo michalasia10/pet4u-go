@@ -21,7 +21,6 @@ func NewRouter() chi.Router {
 	repo := pg.NewPlaceRepository(database.GormDB())
 
 	r.Get("/", httpx.Endpoint(func(r *http.Request) (int, any, error) {
-		// Backwards-compatible behavior: internal only, no external provider
 		resp, err := application.NewSearchUseCase(repo).Execute(application.SearchRequest{})
 		if err != nil {
 			return http.StatusInternalServerError, nil, err
@@ -31,10 +30,7 @@ func NewRouter() chi.Router {
 	}))
 
 	r.Get("/search", httpx.Endpoint(func(r *http.Request) (int, any, error) {
-		// Extended search with provider/osm, geo, radius, pet type
 		query := r.URL.Query().Get("q")
-		tags := r.URL.Query()["tag"]
-		provider := r.URL.Query().Get("provider")
 		latPtr, lngPtr := parseLatLng(r)
 		radiusPtr := parseRadius(r)
 		petTypePtr := parsePetType(r)
@@ -45,13 +41,12 @@ func NewRouter() chi.Router {
 
 		resp, err := uc.Execute(application.ExtendedSearchRequest{
 			Query:    query,
-			Tags:     tags,
 			PetType:  petTypePtr,
 			Lat:      latPtr,
 			Lng:      lngPtr,
 			RadiusM:  radiusPtr,
 			Limit:    50,
-			Provider: provider,
+			Provider: "osm",
 		})
 		if err != nil {
 			return http.StatusInternalServerError, nil, err
