@@ -20,11 +20,11 @@ var _ = Describe("InMemoryPlaceRepository", func() {
 	})
 
 	It("searches by name/address and tags", func() {
-		resp, err := repo.Search("park", nil)
+		resp, err := repo.Search(domain.SearchCriteria{Query: "park"})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(resp).To(HaveLen(1))
 
-		resp, err = repo.Search("", []string{"WIFI"})
+		resp, err = repo.Search(domain.SearchCriteria{Tags: []string{"WIFI"}})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(resp).To(HaveLen(1))
 	})
