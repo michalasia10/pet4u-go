@@ -8,15 +8,17 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/go-chi/render"
 
-    appointmentshttp "src/internal/modules/appointments/interfaces/http"
-    petshttp "src/internal/modules/pets/interfaces/http"
-    placeshttp "src/internal/modules/places/interfaces/http"
+	appointmentshttp "src/internal/modules/appointments/interfaces/http"
+	petshttp "src/internal/modules/pets/interfaces/http"
+	placeshttp "src/internal/modules/places/interfaces/http"
 )
 
 func (s *Server) RegisterRoutes() http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
+	r.Use(render.SetContentType(render.ContentTypeJSON))
 
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"https://*", "http://*"},
